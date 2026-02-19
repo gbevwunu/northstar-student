@@ -18,6 +18,31 @@ const WIZARD_STEPS: Step[] = [
       { label: '🔧 Repairs Not Being Made', value: 'repairs', next: 'repairs_reported' },
       { label: '🚪 Eviction or Notice to Leave', value: 'eviction', next: 'eviction_type' },
       { label: '📋 General Rights Info', value: 'general', next: 'general_info' },
+      { label: '📝 Generate a Dispute Letter', value: 'letter', next: 'letter_redirect' },
+    ],
+  },
+
+  // === LETTER REDIRECT ===
+  {
+    id: 'letter_redirect',
+    question: '',
+    options: [
+      {
+        label: '📝 Go to Letter Generator',
+        value: 'go',
+        next: null,
+        info: `Use our **Dispute Letter Generator** to create a formal letter to your landlord.
+
+Available templates:
+- **Security Deposit Return** — Demand your deposit back
+- **Repair Request** — Formally request repairs
+- **Rent Increase Dispute** — Challenge an improper increase
+- **Eviction Response** — Respond to an invalid eviction notice
+
+Each letter references the Manitoba Residential Tenancies Act and includes the RTB contact information.
+
+**[Click here to generate a letter →](/dashboard/tenancy/letter)**`,
+      },
     ],
   },
 

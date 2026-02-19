@@ -107,3 +107,22 @@ export const notificationApi = {
   markAllRead: (token: string) =>
     api('/notifications/read-all', { method: 'POST', token }),
 };
+
+// Document helpers
+export const documentApi = {
+  getAll: (token: string, type?: string) =>
+    api(`/documents${type ? `?type=${type}` : ''}`, { token }),
+
+  getUploadUrl: (token: string, data: {
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    type: string;
+  }) => api('/documents/upload-url', { method: 'POST', body: data, token }),
+
+  getDownloadUrl: (token: string, id: string) =>
+    api(`/documents/${id}/download`, { token }),
+
+  delete: (token: string, id: string) =>
+    api(`/documents/${id}`, { method: 'DELETE', token }),
+};
