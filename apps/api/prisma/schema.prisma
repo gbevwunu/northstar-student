@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER & AUTH
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  university    University @default(UNIVERSITY_OF_MANITOBA)
+  program       String?
+  studentId     String?
+  avatarUrl     String?
+  role          Role       @default(STUDENT)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  // Relations
+  studyPermit       StudyPermit?
+  workLogs          WorkLog[]
+  complianceItems   ComplianceItem[]
+  documents         Document[]
+  notifications     Notification[]
+
+  @@map("users")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  ADVISOR
+}
+
+enum University {
+  UNIVERSITY_OF_MANITOBA
+  UNIVERSITY_OF_WINNIPEG
+  RED_RIVER_COLLEGE
+  BRANDON_UNIVERSITY
+  OTHER
+}
+
+// ============================================
+// STUDY PERMIT TRACKING
+// ============================================
+
+model StudyPermit {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  permitNumber    String?
+  issueDate       DateTime?
+  expiryDate      DateTime
+  status          PermitStatus @default(ACTIVE)
+  conditions      String[]     // Array of permit conditions
+  reminderSent90  Boolean      @default(false)
+  reminderSent60  Boolean      @default(false)
+  reminderSent30  Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_permits")
+}
+
+enum PermitStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  RENEWAL_PENDING
+}
+
+// ============================================
+// WORK HOUR TRACKING
+// ============================================
+
+model WorkLog {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @db.Date
+  hoursWorked Float
+  employer    String
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, employer])
+  @@index([userId, date])
+  @@map("work_logs")
+}
+
+// ============================================
+// COMPLIANCE CHECKLIST
+// ============================================
+
+model ComplianceRule {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  category        ComplianceCategory
+  province        String   @default("MB")
+  deadlineType    DeadlineType
+  deadlineDays    Int?     // Days before/after a reference date
+  referenceField  String?  // e.g., "studyPermit.expiryDate"
+  isActive        Boolean  @default(true)
+  priority        Int      @default(0)
+  helpUrl         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  complianceItems ComplianceItem[]
+
+  @@map("compliance_rules")
+}
+
+enum ComplianceCategory {
+  STUDY_PERMIT
+  WORK_AUTHORIZATION
+  ENROLLMENT
+  HEALTH_INSURANCE
+  HOUSING
+  TAXES
+  REPORTING
+}
+
+enum DeadlineType {
+  FIXED_DATE         // Specific calendar date
+  RELATIVE_TO_PERMIT // X days before permit expiry
+  RECURRING          // e.g., every semester
+  ONE_TIME           // Do once
+}
+
+model ComplianceItem {
+  id            String           @id @default(cuid())
+  userId        String
+  ruleId        String
+  status        ComplianceStatus @default(PENDING)
+  dueDate       DateTime?
+  completedAt   DateTime?
+  documentId    String?
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rule     ComplianceRule @relation(fields: [ruleId], references: [id])
+  document Document?      @relation(fields: [documentId], references: [id])
+
+  @@unique([userId, ruleId])
+  @@index([userId, status])
+  @@map("compliance_items")
+}
+
+enum ComplianceStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  OVERDUE
+  NOT_APPLICABLE
+}
+
+// ============================================
+// DOCUMENT VAULT
+// ============================================
+
+model Document {
+  id          String       @id @default(cuid())
+  userId      String
+  type        DocumentType
+  fileName    String
+  fileSize    Int
+  mimeType    String
+  s3Key       String
+  isVerified  Boolean      @default(false)
+  uploadedAt  DateTime     @default(now())
+  expiresAt   DateTime?
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  complianceItems ComplianceItem[]
+
+  @@index([userId, type])
+  @@map("documents")
+}
+
+enum DocumentType {
+  STUDY_PERMIT
+  ENROLLMENT_LETTER
+  WORK_PERMIT
+  COOOP_LETTER
+  LEASE_AGREEMENT
+  HEALTH_INSURANCE
+  TAX_RETURN
+  OTHER
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  channel     NotificationChannel @default(IN_APP)
+  isRead      Boolean            @default(false)
+  actionUrl   String?
+  sentAt      DateTime           @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  PERMIT_EXPIRY
+  WORK_HOUR_WARNING
+  WORK_HOUR_LIMIT
+  COMPLIANCE_DUE
+  COMPLIANCE_OVERDUE
+  DOCUMENT_EXPIRY
+  SYSTEM
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+  SMS
+}
