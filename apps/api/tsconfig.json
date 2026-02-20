@@ -14,10 +14,12 @@
     "declarationMap": true,
     "sourceMap": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@northstar/shared": ["../../packages/shared/src/index.ts"],
+      "@northstar/shared/*": ["../../packages/shared/src/*"]
     },
     "baseUrl": "."
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../packages/shared/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

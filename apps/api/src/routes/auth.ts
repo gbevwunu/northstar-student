@@ -244,6 +244,6 @@ authRouter.post('/change-password', authenticate, async (req: AuthRequest, res: 
 function generateToken(userId: string, email: string, role: string): string {
   const secret = process.env.JWT_SECRET || 'dev-secret';
   return jwt.sign({ userId, email, role }, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  });
+    expiresIn: '7d',
+  } as jwt.SignOptions);
 }
