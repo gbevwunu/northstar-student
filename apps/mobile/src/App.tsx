@@ -38,6 +38,7 @@ const DarkTheme = {
     border: '#334155',
     notification: '#EF4444',
   },
+  fonts: DefaultTheme.fonts,
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
