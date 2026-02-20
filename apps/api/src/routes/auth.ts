@@ -158,6 +158,87 @@ authRouter.get('/me', authenticate, async (req: AuthRequest, res: Response, next
 });
 
 // ===================
+// PATCH /api/auth/profile
+// Update user profile
+// ===================
+const profileUpdateSchema = z.object({
+  firstName: z.string().min(1).optional(),
+  lastName: z.string().min(1).optional(),
+  phone: z.string().optional(),
+  university: z.enum([
+    'UNIVERSITY_OF_MANITOBA',
+    'UNIVERSITY_OF_WINNIPEG',
+    'RED_RIVER_COLLEGE',
+    'BRANDON_UNIVERSITY',
+    'OTHER',
+  ]).optional(),
+  program: z.string().optional(),
+  studentId: z.string().optional(),
+});
+
+authRouter.patch('/profile', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const data = profileUpdateSchema.parse(req.body);
+
+    const user = await prisma.user.update({
+      where: { id: req.userId },
+      data,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        university: true,
+        program: true,
+        studentId: true,
+        role: true,
+      },
+    });
+
+    res.json({ message: 'Profile updated', user });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new AppError(error.errors[0].message, 400));
+    }
+    next(error);
+  }
+});
+
+// ===================
+// POST /api/auth/change-password
+// ===================
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
+authRouter.post('/change-password', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const data = changePasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) throw new AppError('User not found', 404);
+
+    const isValid = await comparePassword(data.currentPassword, user.passwordHash);
+    if (!isValid) throw new AppError('Current password is incorrect', 401);
+
+    const newHash = await hashPassword(data.newPassword);
+    await prisma.user.update({
+      where: { id: req.userId },
+      data: { passwordHash: newHash },
+    });
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return next(new AppError(error.errors[0].message, 400));
+    }
+    next(error);
+  }
+});
+
+// ===================
 // Helper
 // ===================
 function generateToken(userId: string, email: string, role: string): string {

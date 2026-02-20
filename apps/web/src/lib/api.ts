@@ -50,6 +50,20 @@ export const authApi = {
     api('/auth/login', { method: 'POST', body: data }),
 
   me: (token: string) => api('/auth/me', { token }),
+
+  updateProfile: (token: string, data: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    university?: string;
+    program?: string;
+    studentId?: string;
+  }) => api('/auth/profile', { method: 'PATCH', body: data, token }),
+
+  changePassword: (token: string, data: {
+    currentPassword: string;
+    newPassword: string;
+  }) => api('/auth/change-password', { method: 'POST', body: data, token }),
 };
 
 // Work log helpers

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/auth-store';
 import { complianceApi, workLogApi, permitApi, notificationApi } from '@/lib/api';
+import DashboardNav from '@/components/DashboardNav';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -83,41 +84,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* Top Bar */}
-      <header className="border-b border-slate-700/50 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl">⭐</span>
-            <span className="font-bold">NorthStar</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-slate-400">
-            <a href="/dashboard" className="text-white">Dashboard</a>
-            <a href="/dashboard/compliance" className="hover:text-white transition">Checklist</a>
-            <a href="/dashboard/work-log" className="hover:text-white transition">Work Hours</a>
-            <a href="/dashboard/documents" className="hover:text-white transition">Documents</a>
-            <a href="/dashboard/tenancy" className="hover:text-white transition">Tenancy</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 text-slate-400 hover:text-white">
-              🔔
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-slate-400 hover:text-white transition"
-            >
-              Log Out
-            </button>
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">
-              {user?.firstName?.[0] || '?'}
-            </div>
-          </div>
-        </div>
-      </header>
+      <DashboardNav />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">

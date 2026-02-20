@@ -8,6 +8,9 @@ interface User {
   firstName: string;
   lastName: string;
   university: string;
+  program?: string;
+  phone?: string;
+  studentId?: string;
   role: string;
 }
 
@@ -18,6 +21,7 @@ interface AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
   loadFromStorage: () => void;
+  updateUser: (user: User) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -54,5 +58,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       }
     }
+  },
+
+  updateUser: (user: User) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('northstar_user', JSON.stringify(user));
+    }
+    set({ user });
   },
 }));
